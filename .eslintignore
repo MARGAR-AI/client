@@ -1,0 +1,3 @@
+# Ignore documentation files for ESLint
+documentation/*.md
+*.md

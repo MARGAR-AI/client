@@ -1,0 +1,4 @@
+Provider's ID,Name,Role,Available Now,Available In Future,Start Date,End Date,No longer Available,Skills,Experience,Total Assignments,Current Capacity,Max Capacity
+P001,Provider 1,AI Creator,Yes,Yes,2025-03-01,2025-05-31,No,Product Lifestyle,3 years,2,80,100
+P002,Provider 2,AI Creator,Yes,Yes,2025-03-15,2025-06-15,No,Product Interior,2 years,1,60,100
+P003,Provider 3,AI Creator,No,Yes,2025-04-01,2025-07-31,No,Lifestyle Outdoor,4 years,0,0,100 

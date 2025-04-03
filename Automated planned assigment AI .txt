@@ -1,0 +1,551 @@
+﻿Title of Web Application : Automated planned assignment of AI providers on projects
+
+
+Objective: Develop a web application to automate the assignment of service providers to planned projects, ensuring efficiency and optimal allocation based on predefined criteria.
+
+
+Key Features: 
+1. Automated and adjustable allocation of AI providers: filment of Resource allocation Planning sheet in the table Planning ressource allocation/ CONCEPTION  https://docs.google.com/spreadsheets/d/1lKLJgwSW7w5m16w6DodUpliOgAVvlz-9Fcng2WSqstk/edit?gid=1950200252#gid=1950200252
+
+
+A provider can do 2 Images per day, considering a week has 5 working days. That means that if the AI creator submit an availability of 1 day, March, 4th, his capacity of the current week is 2 images, so ones he is affected to a project, according to the specific criterias i will explain lately, the project need (in Qty column)  is completed only for this 2 images. 
+
+
+Commun field for providers: Name
+The value for ressources: images (Qty in Project planning, calculated capacity based on 1 per 2 images for availability) 
+
+
+Need to make the daily capacity of the provider manually adjustable.
+
+
+Matching Logic:
+* Step 1: Identify projects needing providers based on launch date.
+* Step 2: Compare daily workload against provider availability.
+* Step 3: Assign providers wherever capacity allows.
+* Step 4: Display unassigned demand (shortages) in red.
+Priority Assignments:
+
+
+TotalImageDelivered: the number to use for prioritizing the assignment, more there are images, more experienced the provider is
+
+
+AvgEdits: the number to use for prioritizing the assignment, less there are edits, more qualified the provider is. Other poing
+
+
+* Assign providers who are available for the entire project duration 
+* Fill gaps using partial availability if needed.
+* Balance workload so no provider is over-assigned.
+
+
+DISPLAY 
+So now we need to display projects  and providers the following way: at the beginning we have all projects to come on a roadmap or a list or whatever form. Each project shows the % of fitness of capacity, the number of images to create, the number of affected providers. Then ones we click on the project, we have the list of affected automatically providers, the detail of the projects, and in other space but not far, a display of available providers for the exact same period as the project launch and before project delivery date. So it is possible to cancel, modify the qty of affectation of images to the provider, and to remove and replace a provider by drag-and-drop mechanism that has to be fluid and comprehensive.
+
+
+Visualize Needed resources in comparison with project needs 
+Example : Gantt chart, thickness of bar is the number of AI Images, the length is the timeline, the fullness is the % of allocated resources according to needs.
+
+
+
+
+Database
+1. Ressource allocation Planning sheetPlanning ressource allocation/ CONCEPTION  https://docs.google.com/spreadsheets/d/1lKLJgwSW7w5m16w6DodUpliOgAVvlz-9Fcng2WSqstk/edit?gid=1950200252#gid=1950200252
+Fillment source: Automatic + possible to modify manually in the App or in the table direcly with syng of all sources of fillment. For the phase 1 of development, we are not going to do a sync via Google API but work with manual appload of csv file for all sources via the app.
+Fillment rules: Each line is the assignment of 1 provider on a specific project (launching)
+Headers: 
+
+
+Assigment ID        Provider's Name        Client        Project ID        Project Name        Batch        Previsional launch date        Previsional delivery date        Service        Qty        % of project
+
+
+Assigment ID: To Generate automatically using the concatenate formula: Provider's Name+Project ID+Batch+Number of row
+Provider's Name
+Client
+Project ID
+Project Name
+Batch
+Previsional launch date
+Previsional delivery date
+Service        Qty
+% of project : the % of the project done by this specific assigment
+
+
+2. Delivery Planning 
+Fillment source: In the Web Application, for each field a special space is created. The Planning input is in it’s specific section, the user is the project manager. The data filled in the app should be synchronized with the spreadsheet, and the data filled in the sheet is synchronized with the app. To do the linkage we dispose on Google API , BUT for the fist stage of development, i suggest to use downloads base in csv files. 
+Fillment rules: Each line is a project ( a part of it or an entire project) that is going to be launched, it indicates quantities and divided by batches
+https://docs.google.com/spreadsheets/d/1lKLJgwSW7w5m16w6DodUpliOgAVvlz-9Fcng2WSqstk/edit?gid=536701555#gid=536701555
+Planning ressource allocation/ CONCEPTION 
+
+
+
+
+Project ID
+	Client
+	DealID
+	Project Name
+	Batch
+	Previsional launch date
+	Previsional final date
+	Previsional First delivery date
+	Status
+	Service
+	Categories of Modeling
+	Project ID
+        Client 
+        DealID: pulled from the data that is in this table https://docs.google.com/spreadsheets/d/1lKLJgwSW7w5m16w6DodUpliOgAVvlz-9Fcng2WSqstk/edit?gid=1768301913#gid=1768301913
+Sheet “Client Deal ID list”
+        Project Name: name of the project , determined by the client
+        Batch: number of deliveries to the client within the project
+        Previsional launch date: Previsional start of the project 
+        Previsional final date: Previsional final delivery date
+        Previsional First delivery date: Date of the delivery of the first batch (not used for the moment)
+        Status: status of project if already launched or is in progress
+        Service        Categories of Modeling: Type of service, for the moment only GENAI is needed to use
+
+
+Comments
+	Qty
+	% of allocated
+	Confidence Level
+	Last Modified
+	Change Reason
+	Notified People
+	Project Manager
+	Duration
+	Comments
+        Qty: The quantity of AI Images
+        % of allocated: The % of allocation of providers on projects
+        Confidence Level: The level of confidence in the launching of project
+        Last Modified: Not used for the moment
+        Change Reason: Not used for the moment
+        Notified People : Not used for the moment
+        Project Manager: Not used for the moment
+
+
+        Duration: Calculated automatically, the difference between Previsional launch date and
+        Previsional final date
+
+
+3. Planning ressource allocation/ CONCEPTION 
+https://docs.google.com/spreadsheets/d/1lKLJgwSW7w5m16w6DodUpliOgAVvlz-9Fcng2WSqstk/edit?gid=1682220051#gid=1682220051
+Sheet: Availability
+
+
+Source: Another web application in progress of development, possible t
+Rules: Each line corresponds to an availability submitted by provider (AI creators are the only one in who we are interested for the moment, meaning, the column “Role” has to be filtered to keep only the “AI Creator”
+A provider can also submit several periods of availability, we should count them separately except the cases of overlapping
+
+
+Headers: 
+Provider's ID
+	Name
+	Role
+	Available Now
+	Available In Future
+	Start Date
+	End Date
+	No longer Available
+	Submission Date
+	Message
+	Provider's ID
+        Name: Provider’s nmae
+        Role: AI Creator is what we are interested in, meaning we need to filter this file to get only
+        Available Now: do not take in consideration for the moment
+        Available In Future: TRUE to take into consideration
+        Start Date: Start of availability
+        End Date: End of availabiliy
+        No longer Available: if TRUE, to exclude
+        Submission Date: Not take in consideration for the moment
+        Message: Not take in consideration for the moment
+
+
+Suggestion for virtual columns to do calculations: 
+Duration: number of days between Start Date and End Date ,avoiding sunday and saturday
+Capacity for available period: multiply this number of days by the daily capacity wich is a variable to display
+Capacity per week : 5 working days
+
+
+4. genai_creators_workload
+https://docs.google.com/spreadsheets/d/1G5w3mFzvCaZWS99kP9S6CiIr6UT2RE1ucQBI-bDJwfQ/edit?gid=44534149#gid=44534149
+
+
+Data source: Data comes from the specific platform where creators are doing the AI images. It’s showing past and current workload for AI Creators
+Rules: 1 line is the information for 1 AI Creator
+
+
+Headers: 
+  
+
+
+
+ImageCreatorUserName: AI Creator, has to match the Availability form (to do the check for name/surname, may be the order of them is not right) 
+orgCode: Client’s name
+ActiveWorkloadSKUsLaunched: we consider the Creator is doing 2 images per SKU ( this number is a VARIABLE different for each client, so need an additional entry space for this input)
+ActiveWorkloadSLUsQC: do not take in consideration for the moment
+TotalSKUs: do not take in consideration for the moment
+
+
+TotalImageDelivered: the number to use for prioritizing the assignment, more there are images, more experienced the provider is
+
+
+AvgEdits: the number to use for prioritizing the assignment, less there are edits, more qualified the provider is. Other poing
+
+
+Automated Planned Assignment of AI Providers on Projects
+
+
+I. Objective
+
+
+Develop a web application to automate the assignment of service providers (AI providers) to planned projects, ensuring efficiency and optimal allocation based on predefined criteria.
+
+
+II. Key Features
+* Automated and adjustable allocation of AI providers.
+* Matching logic based on daily workload and provider availability.
+* Priority assignments based on experience (TotalImageDelivered) and quality (AvgEdits).
+* Clear display of projects, providers, and resource allocation.
+* Visualization of needed vs. allocated resources (e.g., Gantt chart).
+* Manual adjustment of provider's daily capacity.
+III. Data Sources
+1. Resource Allocation Planning Sheet:
+   * Link: Planning ressource allocation/ CONCEPTION
+   * Fillment source: Automatic + manual modification possible.
+   * Fillment rules: Each line is the assignment of 1 provider to a specific project launch.
+   * Headers:
+      * Assignment ID
+      * Provider's Name
+      * Client
+      * Project ID
+      * Project Name
+      * Batch
+      * Previsional launch date
+      * Previsional delivery date
+      * Service
+      * Qty
+      * % of project
+   * Assignment ID Generation: Provider's Name + Project ID + Batch + Row Number
+2. Delivery Planning Sheet:
+   * Link: Planning ressource allocation/ CONCEPTION
+   * Fillment source: Web application input + spreadsheet synchronization. (CSV upload for phase 1)
+   * Fillment rules: Each line is a project (or part of it) to be launched.
+   * Headers:
+      * Project ID
+      * Client
+      * DealID (pulled from "Client Deal ID list")
+      * Project Name
+      * Batch
+      * Previsional launch date
+      * Previsional final date
+      * Previsional First delivery date
+      * Status
+      * Service
+      * Categories of Modeling
+      * Comments
+      * Qty
+      * % of allocated
+      * Confidence Level
+      * Last Modified
+      * Change Reason
+      * Notified People
+      * Project Manager
+      * Duration (Calculated)
+3. Availability Sheet:
+   * Link: Planning ressource allocation/ CONCEPTION
+   * Source: Another web application in progress.
+   * Rules: Each line is a provider's availability.
+   * Headers:
+      * Provider's ID
+      * Name
+      * Role (Filter for "AI Creator")
+      * Available Now (Not used)
+      * Available In Future (TRUE)
+      * Start Date
+      * End Date
+      * No longer Available (TRUE to exclude)
+      * Submission Date (Not used)
+      * Message (Not used)
+   * Virtual Columns (for calculations):
+      * Duration (days between Start and End, excluding weekends)
+      * Capacity for available period (Duration * Daily capacity)
+      * Capacity per week (5 working days)
+4. AI Creator Workload Sheet:
+   * Link: genai_creators_workload
+   * Source: AI image creation platform.
+   * Rules: 1 line = information for 1 AI Creator.
+   * Headers:
+      * ImageCreatorUserName (match Availability form)
+      * orgCode (Client’s name)
+      * ActiveWorkloadSKUsLaunched (2 images/SKU - variable)
+      * ActiveWorkloadSLUsQC (Not used)
+      * TotalSKUs (Not used)
+      * TotalImageDelivered (Prioritization)
+      * AvgEdits (Prioritization)
+IV. Matching Logic
+1. Identify projects needing providers based on launch date.
+2. Compare daily workload against provider availability.
+3. Assign providers where capacity allows.
+4. Display unassigned demand (shortages) in red.
+V. Priority Assignments
+* TotalImageDelivered: Prioritize by experience (more images = more experienced).
+* AvgEdits: Prioritize by quality (fewer edits = more qualified).
+* Assign providers available for the entire project duration.
+* Fill gaps using partial availability if needed.
+* Balance workload to avoid over-assignment.
+VI. Display
+* Display all upcoming projects (roadmap, list, etc.).
+* Each project shows:
+   * % of fitness of capacity
+   * Number of images to create
+   * Number of affected providers
+* Clicking a project shows:
+   * List of automatically assigned providers
+   * Project details
+   * Display of available providers for the project period.
+   * Ability to cancel, modify image qty, remove/replace providers (drag-and-drop).
+* Visualize needed resources vs. project needs:
+   * Example: Gantt chart (bar thickness = AI Images, length = timeline, fullness = % of allocated resources).
+VII. Provider Capacity
+* A provider can do 2 Images per day (5 working days/week).
+* Availability of 1 day = capacity of 2 images for the week.
+* Daily capacity of the provider is manually adjustable.
+VIII. Technical Notes
+* Initial phase: CSV uploads for data synchronization.
+* Potential future phase: Google API for live synchronization.
+This organization should make the document easier to understand and follow. Please let me know if you'd like any further refinements!
+
+
+
+After killing V2: 
+# Detailed Description of the AI Provider Assignment Application
+
+
+## Application Overview
+
+
+This is a web application for managing AI provider assignments to projects. The application consists of a Node.js Express backend and a React frontend with Material UI components. It's designed to help manage resources (AI creators) and assign them to various projects based on their availability and capacity.
+
+
+## Core Functionalities
+
+
+1. **Project Management**
+   - View a list of all projects with details like ID, name, client, dates, and required images
+   - Calculate and display allocation status for each project
+   - Export project data to CSV format
+   - View detailed information for individual projects
+
+
+2. **Provider Management**
+   - View and manage AI creators/providers
+   - Track provider availability periods
+   - Set daily capacity for providers
+   - Group providers by name and display their availability periods
+
+
+3. **Assignment Management**
+   - Assign providers to specific projects
+   - Calculate percentage of project allocated to each provider
+   - Export assignments to CSV format
+   - View all assignments across all projects
+
+
+4. **Timeline Visualization**
+   - Gantt chart view of projects and assignments
+   - Visual representation of project timelines
+   - Zoom and navigation controls for the timeline
+
+
+5. **Data Import/Export**
+   - Import data from CSV files
+   - Export project and assignment data to CSV files in specific formats
+
+
+## Technical Architecture
+
+
+1. **Backend (Node.js/Express)**
+   - API endpoints for projects, providers, and workload data
+   - CSV parsing for data import
+   - Serving static files from the client build directory
+
+
+2. **Frontend (React)**
+   - Material UI components for the interface
+   - React Router for navigation
+   - Axios for API requests
+   - Date-fns for date manipulation
+
+
+3. **Data Storage**
+   - CSV files for data persistence:
+     - `Planning ressource allocation_ CONCEPTION  - Delivery Planning (1).csv` (Projects)
+     - `Planning ressource allocation_ CONCEPTION  - Availability.csv` (Providers)
+     - `genai_creators_workload - genai_creators_workload.csv` (Workload)
+
+
+## Key Components
+
+
+1. **ProjectList.js**
+   - Displays all projects in a table
+   - Shows allocation status with progress bars
+   - Provides export functionality for project data
+
+
+2. **ProjectDetail.js**
+   - Shows detailed information for a specific project
+   - Allows assigning providers to the project
+   - Displays assigned providers and their allocation
+
+
+3. **ProviderManagement.js**
+   - Lists all providers grouped by name
+   - Shows availability periods for each provider
+   - Displays assignments in an accordion format
+
+
+4. **AssignmentList.js**
+   - Shows all assignments across all projects
+   - Provides export functionality for assignment data
+   - Links to project details
+
+
+5. **ProjectGantt.js**
+   - Visual timeline of projects
+   - Date navigation and zoom controls
+   - Project status visualization
+
+
+## Errors Encountered and Lessons Learned
+
+
+1. **Port Conflicts (EADDRINUSE)**
+   - **Error**: `Error: listen EADDRINUSE: address already in use :::5000`
+   - **Cause**: Multiple instances of the server trying to use the same port
+   - **Solution**: Kill all Node.js processes before starting the server
+   - **Learning**: Always ensure no other processes are using the required port before starting the server
+
+
+2. **Missing Dependencies**
+   - **Error**: `Error: Cannot find module 'express'`
+   - **Cause**: Dependencies not installed or node_modules not found
+   - **Solution**: Run `npm install` in both root and client directories
+   - **Learning**: Always check that all dependencies are properly installed before running the application
+
+
+3. **React and MUI Version Compatibility Issues**
+   - **Error**: Multiple `Module not found` errors for MUI icon components
+   - **Cause**: Incompatible versions of React (v19) and Material UI
+   - **Solution**: Downgrade React to a compatible version or upgrade MUI
+   - **Learning**: Check compatibility between major libraries before upgrading
+
+
+4. **Client Build Issues**
+   - **Error**: `sh: react-scripts: command not found`
+   - **Cause**: react-scripts not installed or not in PATH
+   - **Solution**: Install react-scripts or run `npm install` in the client directory
+   - **Learning**: Ensure all dev dependencies are installed before building
+
+
+5. **Date Parsing Issues**
+   - **Cause**: Inconsistent date formats in CSV data (DD/MM/YYYY)
+   - **Solution**: Create a custom date parsing function using date-fns
+   - **Learning**: Always handle date parsing carefully, especially with international formats
+
+
+6. **Missing CSV Files**
+   - **Cause**: CSV files not found in the expected location
+   - **Solution**: Ensure all required data files are in the correct location
+   - **Learning**: Validate file paths and provide clear error messages for missing files
+
+
+7. **Incomplete Client Build**
+   - **Cause**: Client build directory missing key files
+   - **Solution**: Properly build the client application with `npm run build`
+   - **Learning**: Verify the build output contains all necessary files
+
+
+## Useful Information for Restart
+
+
+1. **Environment Setup**
+   - Node.js version: v22.14.0 (consider downgrading to a more stable LTS version)
+   - Required global packages: npm or yarn
+
+
+2. **Dependency Management**
+   - React version should be compatible with MUI (downgrade from v19.0.0)
+   - Check package.json for all required dependencies
+
+
+3. **File Structure**
+   - Backend: server.js in the root directory
+   - Frontend: client/src directory contains all React components
+   - Data: CSV files in the root directory
+
+
+4. **Starting the Application**
+   - Backend: `node server.js` or `npm start` from the root directory
+   - Frontend: `npm start` from the client directory
+   - Full stack: `npm run dev:full` from the root directory
+
+
+5. **Port Configuration**
+   - Backend runs on port 5000
+   - Frontend development server typically runs on port 3000
+
+
+6. **Data Files**
+   - Ensure all CSV files are in the correct format and location
+   - Check date formats in CSV files (DD/MM/YYYY)
+
+
+7. **Build Process**
+   - Build the client with `npm run build` from the client directory
+   - The server serves static files from client/build
+
+
+## Recommended Restart Approach
+
+
+1. **Clean Environment**
+   - Kill all running Node.js processes
+   - Clear npm cache if necessary
+
+
+2. **Fix Dependencies**
+   - Update package.json in both root and client directories
+   - Downgrade React from v19.0.0 to v18.2.0
+   - Ensure MUI versions are compatible
+
+
+3. **Reinstall Dependencies**
+   - Run `npm install` in the root directory
+   - Run `npm install` in the client directory
+
+
+4. **Update Server Code**
+   - Modify server.js to handle errors gracefully
+   - Add proper error handling for CSV file reading
+   - Add validation for date formats
+
+
+5. **Update Client Code**
+   - Fix date parsing issues in components
+   - Simplify icon imports to avoid missing module errors
+   - Add error boundaries to catch runtime errors
+
+
+6. **Testing Strategy**
+   - Test the server API endpoints independently
+   - Test the client components with mock data
+   - Test the full application with real data
+
+
+7. **Deployment Considerations**
+   - Ensure all environment variables are properly set
+   - Configure proper build scripts for production
+   - Set up proper error logging
+
+
+By following this approach and learning from the previous errors, you should be able to successfully restart the application development with fewer issues.

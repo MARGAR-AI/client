@@ -1,0 +1,4 @@
+Provider's ID,Name,Client,Project,Type,Quantity,Start Date,End Date,Status,Daily Capacity,Total Capacity,Used Capacity
+P001,Provider 1,WAYFAIR,Spring Collection,Product,150,2025-03-01,2025-03-31,Active,2,40,30
+P002,Provider 2,LOWES,Home Essentials,Product,200,2025-03-01,2025-03-31,Active,2,40,35
+P003,Provider 3,LIVINGSPACE,Urban Living,Lifestyle,100,2025-03-01,2025-03-31,Active,2,40,25 

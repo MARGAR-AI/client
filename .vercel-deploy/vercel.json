@@ -1,0 +1,16 @@
+{
+  "version": 2,
+  "buildCommand": false,
+  "outputDirectory": "client",
+  "functions": {
+    "api/index.js": {
+      "memory": 1024,
+      "includeFiles": "data/**"
+    }
+  },
+  "rewrites": [
+    { "source": "/api", "destination": "/api/index" },
+    { "source": "/dashboard/capacity-new", "destination": "/index.html" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+} 
