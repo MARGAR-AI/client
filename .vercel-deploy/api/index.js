@@ -1,4 +1,6 @@
 const { readCsvFile, getDataFilePath } = require('./csv-reader');
+const fs = require('fs');
+const path = require('path');
 
 // Consolidated API endpoint to return all data
 module.exports = async (req, res) => {
@@ -14,6 +16,18 @@ module.exports = async (req, res) => {
 
   const { type } = req.query;
   console.log(`API request received: ${type || 'all'}`);
+  console.log(`Current working directory: ${process.cwd()}`);
+  
+  // List all files in the data directory for debugging
+  try {
+    const dataDir = path.join(process.cwd(), 'data');
+    console.log(`Checking data directory: ${dataDir}`);
+    
+    const files = fs.readdirSync(dataDir);
+    console.log('Files in data directory:', files);
+  } catch (error) {
+    console.error(`Error listing data directory: ${error.message}`);
+  }
   
   try {
     let data = [];
@@ -33,31 +47,56 @@ module.exports = async (req, res) => {
       default:
         // Return all data if no specific type is requested
         try {
-          let projects = await readCsvFile(getDataFilePath('projects.csv')).catch((err) => {
-            console.log('Failed to read projects.csv:', err.message);
-            return [];
-          });
+          console.log('Attempting to load all data files...');
           
-          let assignments = await readCsvFile(getDataFilePath('assignments.csv')).catch((err) => {
-            console.log('Failed to read assignments.csv:', err.message);
-            return [];
-          });
+          let projects = [];
+          try {
+            projects = await readCsvFile(getDataFilePath('projects.csv'));
+            console.log('Projects loaded successfully:', projects.length);
+          } catch (err) {
+            console.error('Failed to read projects.csv:', err.message);
+          }
           
-          let availability = await readCsvFile(getDataFilePath('Planning ressource allocation_ CONCEPTION  - Creator Availability.csv')).catch(async (err) => {
-            console.log('Failed to read Creator Availability.csv, trying availability.csv:', err.message);
-            return await readCsvFile(getDataFilePath('availability.csv')).catch(() => {
-              console.log('Failed to read availability.csv, using mock data');
-              return [];
-            });
-          });
+          let assignments = [];
+          try {
+            assignments = await readCsvFile(getDataFilePath('assignments.csv'));
+            console.log('Assignments loaded successfully:', assignments.length);
+          } catch (err) {
+            console.error('Failed to read assignments.csv:', err.message);
+          }
           
-          // Transform availability data to expected format
+          let availability = [];
+          try {
+            availability = await readCsvFile(getDataFilePath('availability.csv'));
+            console.log('Availability loaded successfully:', availability.length);
+          } catch (err) {
+            console.error('Failed to read availability.csv:', err.message);
+            try {
+              availability = await readCsvFile(getDataFilePath('Planning ressource allocation_ CONCEPTION  - Creator Availability.csv'));
+              console.log('Creator Availability loaded successfully:', availability.length);
+            } catch (err2) {
+              console.error('Failed to read Creator Availability.csv:', err2.message);
+            }
+          }
+          
+          // Transform availability data
           availability = transformAvailabilityData(availability);
           
           // If any data is empty, use mock data
-          if (!projects.length) projects = getMockProjects();
-          if (!assignments.length) assignments = getMockAssignments();
-          if (!availability.length) availability = getMockAvailability();
+          if (!projects.length) {
+            console.log('Using mock projects data');
+            projects = getMockProjects();
+          }
+          
+          if (!assignments.length) {
+            console.log('Using mock assignments data');
+            assignments = getMockAssignments();
+          }
+          
+          if (!availability.length) {
+            console.log('Using mock availability data');
+            availability = getMockAvailability();
+          }
           
           return res.status(200).json({
             projects,
@@ -77,17 +116,13 @@ module.exports = async (req, res) => {
     // Read data for specific file if requested
     if (fileName) {
       try {
+        console.log(`Attempting to read ${fileName}...`);
+        data = await readCsvFile(getDataFilePath(fileName));
+        console.log(`Successfully read ${fileName}, ${data.length} records`);
+        
+        // Transform availability data if needed
         if (type === 'availability') {
-          // Try to read the actual availability file with the full name
-          data = await readCsvFile(getDataFilePath('Planning ressource allocation_ CONCEPTION  - Creator Availability.csv')).catch(async () => {
-            // Fall back to the simple name
-            return await readCsvFile(getDataFilePath('availability.csv'));
-          });
-          
-          // Transform availability data
           data = transformAvailabilityData(data);
-        } else {
-          data = await readCsvFile(getDataFilePath(fileName));
         }
       } catch (err) {
         console.log(`Failed to read ${fileName}, using mock data:`, err.message);
@@ -122,6 +157,11 @@ function transformAvailabilityData(data) {
   console.log('Raw availability data sample:', JSON.stringify(data[0]));
   
   return data.map(item => {
+    // Check if this is already in the right format
+    if (item.Role && item['No longer Available'] !== undefined) {
+      return item;
+    }
+    
     // Check each possible key pattern in the data
     const roleKey = Object.keys(item).find(key => 
       key.includes('Role') || key.includes('role') || 
@@ -134,21 +174,21 @@ function transformAvailabilityData(data) {
     );
     
     // Extract role value - use AI Creator as default
-    const role = roleKey ? item[roleKey] : 'AI Creator';
+    const role = item['Name'] || item['Role'] || 'AI Creator';
     
     // Check if they are available
-    const isAvailable = 
-      // If we have a direct availability key
-      (availabilityKey && (
-        item[availabilityKey] === 'Yes' || 
-        item[availabilityKey] === 'TRUE' || 
-        item[availabilityKey] === 'FALSE'
-      )) ||
-      // Or check individual keys that might indicate availability
-      item['Available Now'] === 'Yes' || 
-      item['No longer Available'] === 'FALSE';
+    let isAvailable = true;
     
-    // Create a standardized availability object
+    // Try to determine availability from various possible fields
+    if (item['Available Now'] === 'Yes' || item['Available Now'] === 'yes') {
+      isAvailable = true;
+    } else if (item['No longer Available'] === 'FALSE') {
+      isAvailable = true;
+    } else if (item['No longer Available'] === 'TRUE') {
+      isAvailable = false;
+    }
+    
+    // Return a standardized availability object
     return {
       "Role": "AI Creator", // Always use AI Creator as the role
       "No longer Available": isAvailable ? "FALSE" : "TRUE"

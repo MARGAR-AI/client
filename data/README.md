@@ -17,20 +17,23 @@ Ensure your CSV files have headers that match the expected format for each API e
 Example headers:
 
 ### availability.csv
+
 ```
 Provider's ID,Name,Role,No longer Available,Skills
 ```
 
 ### assignments.csv
+
 ```
 Assignment ID,Provider,Client,Project,Start Date,End Date,Quantity
 ```
 
 ### projects.csv
+
 ```
 Project ID,Name,Client,Type,Status
 ```
 
 ## Deployment
 
-When deploying to Vercel, make sure these CSV files are included in your deployment. The API endpoints will automatically read these files to serve the data. 
+When deploying to Vercel, make sure these CSV files are included in your deployment. The API endpoints will automatically read these files to serve the data.

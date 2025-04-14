@@ -20,23 +20,46 @@ const readCsvFile = (filePath) => {
       console.log(`Attempting to read file: ${filePath}`);
       
       // Check if file exists
-      const exists = await fileExists(filePath);
-      if (!exists) {
+      if (!fs.existsSync(filePath)) {
+        console.error(`CRITICAL ERROR: File does not exist: ${filePath}`);
         return reject(new Error(`File not found: ${filePath}`));
       }
       
       // Try to get file stats for debugging
       try {
-        const stats = await promisify(fs.stat)(filePath);
+        const stats = fs.statSync(filePath);
         console.log(`File ${filePath} stats: size=${stats.size}, isFile=${stats.isFile()}`);
+        
+        if (stats.size === 0) {
+          console.error(`CRITICAL ERROR: File is empty: ${filePath}`);
+          return reject(new Error(`File is empty: ${filePath}`));
+        }
+        
+        if (!stats.isFile()) {
+          console.error(`CRITICAL ERROR: Path is not a file: ${filePath}`);
+          return reject(new Error(`Path is not a file: ${filePath}`));
+        }
       } catch (statsErr) {
         console.error(`Error getting file stats: ${statsErr.message}`);
+      }
+      
+      // Try to read file contents directly first for debugging
+      try {
+        const fileContent = fs.readFileSync(filePath, 'utf8');
+        const firstLine = fileContent.split('\n')[0];
+        console.log(`First line of file: "${firstLine}"`);
+        
+        if (!fileContent || !firstLine) {
+          console.error(`CRITICAL ERROR: File appears to have no content: ${filePath}`);
+        }
+      } catch (readErr) {
+        console.error(`Error reading file directly: ${readErr.message}`);
       }
       
       const results = [];
       
       // Read file with detailed error handling
-      const stream = fs.createReadStream(filePath)
+      const stream = fs.createReadStream(filePath, { encoding: 'utf8' })
         .on('error', (err) => {
           console.error(`Stream error for ${filePath}: ${err.message}`);
           reject(err);
@@ -101,7 +124,7 @@ const readCsvFile = (filePath) => {
 
 // Helper function to get absolute path to data file
 const getDataFilePath = (filename) => {
-  const filePath = path.join(process.cwd(), 'data', filename);
+  const filePath = path.join(process.cwd(), 'vercel-data', filename);
   console.log(`Looking for data file at: ${filePath}`);
   return filePath;
 };

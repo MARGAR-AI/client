@@ -1,4 +1,121 @@
-Provider's ID,Name,Client,Project,Type,Quantity,Start Date,End Date,Status,Daily Capacity,Total Capacity,Used Capacity
-P001,Provider 1,WAYFAIR,Spring Collection,Product,150,2025-03-01,2025-03-31,Active,2,40,30
-P002,Provider 2,LOWES,Home Essentials,Product,200,2025-03-01,2025-03-31,Active,2,40,35
-P003,Provider 3,LIVINGSPACE,Urban Living,Lifestyle,100,2025-03-01,2025-03-31,Active,2,40,25 
+ImageCreatorUserName,orgCode,ActiveWorkloadSKUsLaunched,ActiveWorkloadSKUsQC,TotalSKUs,TotalImages,TotalSKUsDelivered,TotalImagesDelivered,AvgEdits
+Johan Loshouarn,WAYFAIR,3,8,11,0,0,,1.363636364
+Vi Nguyen,WAYFAIR,1,1,2,0,0,,0.5
+Caroline Bonneau,BUT,18,0,18,0,0,,0
+Evgenia Akulova,NFINITE,1,0,1,0,0,,0
+Evgenia Akulova,NFINITEGENAITEST,9,3,13,1,1,1,0.4615384615
+Marion Colombet,NFINITEGENAITEST,1,0,1,0,0,,0
+Johan Loshouarn,NFINITEGENAITEST,10,2,50,39,35,36,1.6
+Caroline Bonneau,NFINITEGENAITEST,24,0,37,13,13,13,0.4864864865
+Kseniya Nekrasova,CONFORAMA,1,1,5,4,3,3,2.8
+Philippine Lacroix,NFINITEGENAITEST,4,1,5,0,0,,0.2
+Tatiana Filatova,NFINITEGENAITEST,7,0,7,0,0,,0
+Julia Lopatskaya,NFINITEGENAITEST,2,4,39,37,31,32,1.564102564
+Yuliia Polishchuk,NFINITEGENAITEST,12,2,31,17,15,15,0.7419354839
+Morgan Mével,NFINITEGENAITEST,3,7,38,29,28,29,1.131578947
+Syriane André,NFINITEGENAITEST,6,0,21,18,14,16,0.7142857143
+Marie Ségaux,NFINITEGENAITEST,2,0,31,29,17,17,1.548387097
+Sylvie Gardey,NFINITEGENAITEST,1,0,1,0,0,,0
+Viktoriia Motruk,LIVINGSPACES,2,6,37,30,22,22,2.648648649
+Gabriel Pérez,LIVINGSPACES,9,5,45,28,19,19,3.155555556
+Mohamed Badr,LIVINGSPACES,6,9,25,9,3,3,2.4
+Danish Shah,LIVINGSPACES,3,10,33,23,13,14,4.818181818
+Joshua Ndace,LIVINGSPACES,4,6,33,17,8,8,3.939393939
+Clara Farras,LIVINGSPACES,9,3,22,8,7,7,2.090909091
+Diana Rogagels,LIVINGSPACES,4,8,77,59,47,47,5.454545455
+Joy Mondol Mondol,LIVINGSPACES,4,0,10,6,5,5,1.9
+Artur Kozhman,LIVINGSPACES,4,4,26,17,8,9,3.461538462
+Yan Voitsekhovskyi,LIVINGSPACES,8,9,24,6,0,,2
+Andres David Trejo Andrade,LIVINGSPACES,5,13,39,21,19,20,1.974358974
+Abhinandan Mahant,LIVINGSPACES,2,3,6,1,0,,0.8333333333
+Leonid Olenchenko Leonid,LIVINGSPACES,4,4,26,15,7,7,4.192307692
+Kseniya Nekrasova,LIVINGSPACES,2,3,27,22,19,20,3.148148148
+Christian Grammatico,LIVINGSPACES,1,6,15,4,3,3,2.266666667
+Nafiseh Azizi,LIVINGSPACES,4,6,27,13,11,11,3.37037037
+Gunjot Singh,LIVINGSPACES,4,6,34,26,19,19,4.088235294
+Iratxe Goñi,LIVINGSPACES,4,5,36,26,25,25,3.055555556
+Abu Hanif,LIVINGSPACES,2,6,19,8,6,6,4.157894737
+Elias Tesfaye,LIVINGSPACES,2,3,20,14,10,10,2.05
+Mounir Ghazi,LIVINGSPACES,1,4,8,3,2,2,1.75
+Bisrat Teshome Maru,LIVINGSPACES,1,6,10,2,1,1,2.4
+Viktoriia Motruk,LOWES,3,0,4,2,1,2,0.75
+Iratxe Goñi,LOWES,1,4,5,0,0,,1
+Christian Grammatico,LOWES,2,2,4,0,0,,0.5
+Shadat Hossain,LOWES,2,2,4,0,0,,0.5
+Yan Voitsekhovskyi,LOWES,1,21,25,10,0,,3.04
+David Delobel,WAYFAIR,0,1,1,0,0,,2
+Caroline Bonneau,bastide,0,1,1,0,0,,2
+Andres David Trejo Andrade,NFINITEGENAITEST,0,2,18,19,16,19,3.277777778
+Danish Shah,NFINITEGENAITEST,0,1,6,5,5,5,6.5
+Christian Grammatico,NFINITEGENAITEST,0,1,14,13,13,13,2.714285714
+Evgenia Akulova,FURNITUREFAIR,0,1,3,3,2,2,2
+Andrii Lysenko,NFINITEGENAITEST,0,7,8,7,0,,1.375
+Anzhelika Hakobyan,CONFORAMA,0,1,2,2,1,1,2
+Andres David Trejo Andrade,CONFORAMA,0,1,1,0,0,,2
+Abu Hanif,CONFORAMA,0,1,1,0,0,,1
+Abhinandan Mahant,CONFORAMA,0,1,1,0,0,,1
+Joy Mondol Mondol,CONFORAMA,0,1,1,0,0,,2
+Artur Kozhman,CONFORAMA,0,1,1,0,0,,2
+Viktoriia Motruk,CONFORAMA,0,1,1,0,0,,1
+Vi Nguyen,NFINITEGENAITEST,0,2,21,23,13,13,2.12
+Rajesh Iyyanar,LIVINGSPACES,0,10,15,4,3,4,2
+Johan Loshouarn,LIVINGSPACES,0,6,11,5,3,3,2.545454545
+Elias Tesfaye,LOWES,0,3,3,0,0,,1.666666667
+Diana Rogagels,LOWES,0,4,5,2,0,,2.2
+Kseniya Nekrasova,LOWES,0,2,3,2,1,2,1.666666667
+Artur Kozhman,LOWES,0,2,2,0,0,,2
+Andres David Trejo Andrade,LOWES,0,5,5,0,0,,1
+Ilona Carteron,NFINITEGENAITEST,0,0,40,40,20,20,1.475
+Julia Lopatskaya,LIVINGSPACES,0,0,8,8,7,7,5.125
+Viktoriia Motruk,OTTO,0,0,1,2,1,2,5
+Kseniya Nekrasova,OTTO,0,0,1,1,1,1,4
+Elias Tesfaye,OTTO,0,0,3,5,3,5,2.666666667
+Andres David Trejo Andrade,OTTO,0,0,1,1,1,1,3
+Artur Kozhman,OTTO,0,0,1,2,1,2,4
+Anzhelika Hakobyan,OTTO,0,0,1,2,1,2,4
+Marine Lacombe,OTTO,0,0,1,2,1,2,2
+Yan Voitsekhovskyi,OTTO,0,0,1,1,1,1,9
+Fairouz Alkhateeb,micasa,0,0,1,1,1,1,2
+Johan Loshouarn,micasa,0,0,3,3,3,3,3
+Elias Tesfaye,micasa,0,0,2,2,2,2,1
+Johan Loshouarn,CONFORAMA,0,0,5,5,5,5,3.2
+Yan Voitsekhovskyi,CONFORAMA,0,0,2,2,2,2,2
+Artur Kozhman,bastide,0,0,3,5,3,5,4.666666667
+Viktoriia Motruk,NFINITEGENAITEST,0,0,32,33,32,33,2.34375
+Mounir Ghazi,NFINITEGENAITEST,0,0,9,9,9,9,3
+Kseniya Nekrasova,NFINITEGENAITEST,0,0,39,41,39,41,2.615384615
+Fairouz Alkhateeb,NFINITEGENAITEST,0,0,15,16,15,16,2.8
+Parva Mesbah,NFINITEGENAITEST,0,0,6,6,6,6,3
+Iratxe Goñi,NFINITEGENAITEST,0,0,44,49,44,49,2.522727273
+Artur Kozhman,NFINITEGENAITEST,0,0,24,24,24,24,2.75
+Elias Tesfaye,NFINITEGENAITEST,0,0,13,13,13,13,2.230769231
+Abu Hanif,NFINITEGENAITEST,0,0,1,1,1,1,2
+Anzhelika Hakobyan,NFINITEGENAITEST,0,0,2,2,2,2,1.5
+Clara Farras,NFINITEGENAITEST,0,0,20,23,20,23,2.4
+Johan Loshouarn,bastide,0,0,1,2,1,2,2
+Evgenia Akulova,bastide,0,0,1,1,1,1,1
+Diana Rogagels,NFINITEGENAITEST,0,0,11,12,11,12,7.181818182
+Viktoriia Motruk,FURNITUREFAIR,0,0,1,1,1,1,1
+Fairouz Alkhateeb,FURNITUREFAIR,0,0,1,1,1,1,3
+Gabriel Pérez,SOURCIDYS,0,0,1,2,1,2,6
+Kseniya Nekrasova,SOURCIDYS,0,0,1,1,1,1,3
+Yan Voitsekhovskyi,SOURCIDYS,0,0,1,1,1,1,3
+Tetiana Chudnovtseva,NFINITEGENAITEST,0,0,1,1,1,1,2
+Agustín Dufour,NFINITEGENAITEST,0,0,2,3,2,3,2.5
+Pol Cayuela,NFINITEGENAITEST,0,0,1,1,1,1,8
+Nafiseh Azizi,NFINITEGENAITEST,0,0,2,2,2,2,7
+Artur Kozhman,BUT,0,0,1,1,1,1,4
+Kseniya Nekrasova,BUT,0,0,1,1,1,1,3
+Iratxe Goñi,BUT,0,0,1,1,1,1,6
+Clara Farras,BUT,0,0,1,1,1,1,7
+Viktoriia Motruk,BUT,0,0,1,1,1,1,4
+Tasmia Jannat,LIVINGSPACES,0,0,5,5,5,5,4.4
+Fairouz Alkhateeb,LIVINGSPACES,0,0,1,1,1,1,2
+Jose Manuel Centeno,LIVINGSPACES,0,0,5,5,5,5,4
+Anzhelika Hakobyan,LIVINGSPACES,0,0,1,2,1,2,1
+Marina Klimova,NFINITEGENAITEST,0,0,12,12,12,12,1.333333333
+Anna Dias Da Silva,LOWES,0,0,4,8,4,8,6
+Uliana Sanina,NFINITEGENAITEST,0,0,3,3,3,3,1
+Marina Klimova,JPG,0,0,6,6,6,6,2.5
+Marine Lacombe,JPG,0,0,3,3,3,3,1.666666667
+Anna Dias Da Silva,JPG,0,0,1,1,1,1,1

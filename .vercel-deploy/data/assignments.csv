@@ -1,4 +1,19 @@
 Assignment ID,Provider,Client,Project,Start Date,End Date,Quantity
-A001,P001,WAYFAIR,Project Name,2025-03-01,2025-03-31,150
-A002,P002,LOWES,Project Name,2025-03-01,2025-03-31,200
-A003,P003,LIVINGSPACE,Project Name,2025-03-01,2025-03-31,100 
+,Muhammad Moeez Ahmed,LIVINGSPACES,Living spaces Gen Ai - Set Up Phase,2024-03-01,2024-04-01,50
+,Andrian Melin,LIVINGSPACES,Living spaces Gen Ai - Set Up Phase,2024-03-01,2024-04-01,50
+,Qurban hussain,LIVINGSPACES,Living spaces Gen Ai - Scale Phase 1,2024-04-01,2024-05-01,100
+,Shah Danish,LIVINGSPACES,Living spaces Gen Ai - Scale Phase 1,2024-04-01,2024-05-01,100
+,Muthu T,LOWES,Lowes Gen Ai - Rugs Set Up Phase,2024-03-15,2024-04-15,75
+,Fabio da Silva Teles,LOWES,Lowes Gen Ai - Rugs Set Up Phase,2024-03-15,2024-04-15,75
+,Olenchenko Leonid,LOWES,Lowes Gen Ai - Rugs Initial production Phase,2024-04-15,2024-05-15,150
+,Maru Bisrat Teshome,LOWES,Lowes Gen Ai - Rugs Initial production Phase,2024-04-15,2024-05-15,150
+,Abu Hanif,LOWES,Lowes Gen Ai - Ceiling fan Set Up Phase,2024-05-01,2024-06-01,60
+,Andrea Castro,LOWES,Lowes Gen Ai - Ceiling fan Set Up Phase,2024-05-01,2024-06-01,60
+,Diana Rogagels,LOWES,Lowes Gen Ai - Ceiling fan Initial production Phase,2024-06-01,2024-07-01,120
+,Federico Bethencourt,LOWES,Lowes Gen Ai - Ceiling fan Initial production Phase,2024-06-01,2024-07-01,120
+,Mahmuda Khan Laboni,LOWES,Lowes Gen Ai - Pendant Set Up Phase,2024-05-15,2024-06-15,50
+,Daniel Bernal,LOWES,Lowes Gen Ai - Pendant Set Up Phase,2024-05-15,2024-06-15,50
+,Midhat Altaf Baba,LOWES,Lowes Gen Ai - Pendant Initial production Phase,2024-06-15,2024-07-15,100
+,Marina Gomez,LOWES,Lowes Gen Ai - Pendant Initial production Phase,2024-06-15,2024-07-15,100
+,Renel Arconada,LOWES,Lowes Gen Ai - Rugs Scale Phase,2024-07-01,2024-08-01,200
+,Ordoñez Fernando,LOWES,Lowes Gen Ai - Rugs Scale Phase,2024-07-01,2024-08-01,200

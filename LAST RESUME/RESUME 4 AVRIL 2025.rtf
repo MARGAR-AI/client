@@ -1,0 +1,98 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2757
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww28600\viewh15140\viewkind0
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 # Detailed Conversation Summary: MARGAR-AI Project\
+\
+## Project Overview\
+The project is a resource allocation and project management application deployed on Vercel at client-cyan-omega.vercel.app. It processes and visualizes data from CSV files, tracking assignments of AI providers to various projects for clients such as WAYFAIR, LOWES, and OAK FURN.\
+\
+## Technical Architecture\
+- **Frontend**: React application with Material UI components\
+- **Backend**: Node.js/Express server\
+- **Data Storage**: Currently using CSV files with plans to migrate to BigQuery\
+- **Deployment**: Vercel platform (currently at https://client-cyan-omega.vercel.app)\
+\
+## Key Components Identified\
+1. **Dashboard**: Overview of projects, assignments, and resource allocation\
+2. **GanttChart**: Timeline visualization of projects\
+3. **ProjectDetail**: Detailed view for individual projects\
+4. **Assignments**: Management of resource assignments\
+5. **CapacityProjection**: Analysis of resource capacity\
+\
+## Data Structure\
+The application manages several data entities:\
+- **Projects**: Contains details like Project ID, Project Name, Client, Required Images, Start Date, End Date\
+- **Assignments**: Links providers to projects with fields like Assignment ID, Provider's Name, Project ID, Qty, Service\
+- **Providers**: Details about available resources\
+- **Workload**: Information about provider capacity and workload\
+\
+## Code Repository\
+- GitHub: https://github.com/MARGAR-AI/client\
+- Structure includes client, api, server, and documentation directories\
+\
+## Key Files\
+1. **package.json**: Lists dependencies including:\
+   - cors: ^2.8.5\
+   - csv-parser: ^3.0.0\
+   - date-fns: ^2.30.0\
+   - express: ^4.18.2\
+   - node-cache: ^5.1.2\
+\
+2. **server.js**: Main entry point for the backend application\
+\
+3. **API endpoints**: Currently return data from CSV files, examples include:\
+   ```javascript\
+   module.exports = (req, res) => \{\
+     const sampleAssignments = [\
+       \{\
+         "Assigment ID": "A001",\
+         "Provider's Name": "Provider 1",\
+         "Client": "WAYFAIR",\
+         "Project ID": "P001",\
+         "Project Name": "Sample Project 1",\
+         "Batch": "Batch 1",\
+         "Previsional launch date": new Date("2025-04-01"),\
+         "Previsional delivery date": new Date("2025-04-10"),\
+         "Service": "AI Creation",\
+         "Qty": 20,\
+         "% of project": "20.00"\
+       \},\
+       // more assignments...\
+     ];\
+     res.status(200).json(sampleAssignments);\
+   \};\
+   ```\
+\
+4. **CSV Data Files**: Located in data directories, including:\
+   - delivery_planning.csv\
+   - resource_allocation.csv\
+   - availability_full.csv\
+   - genai_creators_workload.csv\
+\
+## Technical Challenges Discussed\
+1. **CSV Data Loading**: Current implementation reads from CSV files\
+2. **Deployment Issues**: Challenges with building and deploying on Vercel\
+3. **BigQuery Integration**: Plans to replace CSV data source with BigQuery\
+\
+## Recommendations for BigQuery Integration\
+1. **Code Access**: Clone the repository using `git clone https://github.com/MARGAR-AI/client.git`\
+\
+2. **Data Migration**: \
+   - Identify all CSV data files currently in use\
+   - Create equivalent tables in BigQuery\
+   - Import CSV data into BigQuery tables\
+\
+3. **Backend Changes**:\
+   - Install Google Cloud BigQuery library: `npm install @google-cloud/bigquery`\
+   - Set up authentication and environment variables\
+   - Replace CSV loading code with BigQuery queries\
+   - Maintain the same data structure in API responses\
+\
+4. **Testing Strategy**:\
+   - Test each API endpoint individually\
+   - Validate\
+}

@@ -19,7 +19,6 @@ import ProviderManagement from './components/providers/ProviderManagement';
 import AssignmentList from './components/assignments/AssignmentList';
 import AutoAssignments from './components/assignments/AutoAssignments';
 import ProjectGantt from './components/projects/ProjectGantt';
-import NewGantt from './components/projects/NewGantt';
 import CapacityProjectionNew from './components/dashboard/CapacityProjectionNew';
 import { clearExpiredStorage } from './utils/dataStorage';
 
@@ -197,22 +196,9 @@ function App() {
                   </RouteChangeHandler>
                 } 
               />
-              <Route 
-                path="/new-gantt" 
-                element={
-                  <RouteChangeHandler>
-                    <NewGantt />
-                  </RouteChangeHandler>
-                } 
-              />
-              <Route 
-                path="/custom-gantt-chart" 
-                element={
-                  <RouteChangeHandler>
-                    <NewGantt />
-                  </RouteChangeHandler>
-                } 
-              />
+              {/* Redirect old Gantt routes to the main /gantt route */}
+              <Route path="/new-gantt" element={<Navigate to="/gantt" replace />} />
+              <Route path="/custom-gantt-chart" element={<Navigate to="/gantt" replace />} />
             </Routes>
           </Container>
         </Router>

@@ -49,8 +49,7 @@ const Navbar = () => {
     { name: 'Projects', path: '/projects', icon: <ListAltIcon fontSize="small" /> },
     { name: 'Providers', path: '/providers', icon: <PeopleIcon fontSize="small" /> },
     { name: 'Assignments', path: '/assignments', icon: <AssignmentIcon fontSize="small" /> },
-    { name: 'Timeline', path: '/gantt', icon: <TimelineIcon fontSize="small" /> },
-    { name: 'Project Gantt', path: '/new-gantt', icon: <TimelineIcon fontSize="small" /> },
+    { name: 'Project Timeline', path: '/gantt', icon: <TimelineIcon fontSize="small" /> },
   ];
 
   const autoAssignItem = {

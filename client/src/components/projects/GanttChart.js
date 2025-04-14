@@ -12,8 +12,11 @@ import {
   CircularProgress,
   Chip,
   Tooltip,
-  Paper
+  Paper,
+  ListItemText,
+  Checkbox
 } from '@mui/material';
+import { styled } from '@mui/material/styles';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import ZoomInIcon from '@mui/icons-material/ZoomIn';
@@ -21,20 +24,35 @@ import ZoomOutIcon from '@mui/icons-material/ZoomOut';
 import TodayIcon from '@mui/icons-material/Today';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
+import FilterListIcon from '@mui/icons-material/FilterList';
+import PeopleIcon from '@mui/icons-material/People';
+import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
+import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import axios from 'axios';
-import { format, addDays, addMonths, addWeeks, startOfMonth, endOfMonth, isBefore, isAfter } from 'date-fns';
+import { format, addDays, addMonths, addWeeks, startOfMonth, endOfMonth, isBefore, isAfter, startOfWeek, endOfWeek, eachDayOfInterval, eachWeekOfInterval, differenceInDays, isSameMonth } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
+import { alpha } from '@mui/material/styles';
+
+const ViewButton = styled(Button)(({ theme, active }) => ({
+  backgroundColor: active ? theme.palette.primary.main : 'transparent',
+  color: active ? theme.palette.primary.contrastText : theme.palette.text.primary,
+  '&:hover': {
+    backgroundColor: active ? theme.palette.primary.dark : 'rgba(0, 0, 0, 0.04)'
+  }
+}));
 
 const GanttChart = () => {
   const [loading, setLoading] = useState(true);
   const [projects, setProjects] = useState([]);
+  const [allProjects, setAllProjects] = useState([]);
   const [assignments, setAssignments] = useState([]);
   const [providers, setProviders] = useState([]);
-  const [view, setView] = useState('month'); // 'day', 'week', 'month'
+  const [viewMode, setViewMode] = useState('month');
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [zoomLevel, setZoomLevel] = useState(1);
-  const [clientFilter, setClientFilter] = useState('All');
-  const [clientMenu, setClientMenu] = useState(null);
+  const [zoomLevel, setZoomLevel] = useState(50);
+  const [clients, setClients] = useState([]);
+  const [selectedClient, setSelectedClient] = useState('all');
+  const [clientMenuAnchor, setClientMenuAnchor] = useState(null);
   const navigate = useNavigate();
   
   // Fetch data
@@ -47,9 +65,15 @@ const GanttChart = () => {
           axios.get('/api/providers')
         ]);
         
+        setAllProjects(projectsRes.data);
         setProjects(projectsRes.data);
         setAssignments(assignmentsRes.data);
         setProviders(providersRes.data);
+        
+        // Get unique clients
+        const uniqueClients = [...new Set(projectsRes.data.map(p => p.Client).filter(Boolean))];
+        setClients(uniqueClients);
+        
         setLoading(false);
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -60,27 +84,25 @@ const GanttChart = () => {
     fetchData();
   }, []);
   
-  // Get clients for filter
-  const clients = useMemo(() => {
-    const clientSet = new Set();
-    projects.forEach(project => {
-      if (project.Client) {
-        clientSet.add(project.Client);
-      }
-    });
-    return ['All', ...Array.from(clientSet)];
-  }, [projects]);
+  // Filter projects when client changes
+  useEffect(() => {
+    if (selectedClient === 'all') {
+      setProjects(allProjects);
+    } else {
+      setProjects(allProjects.filter(p => p.Client === selectedClient));
+    }
+  }, [selectedClient, allProjects]);
   
   // Timeline dates based on view
   const timelineDates = useMemo(() => {
-    if (view === 'day') {
+    if (viewMode === 'day') {
       // Show 30 days
       const dates = [];
       for (let i = -15; i < 15; i++) {
         dates.push(addDays(currentDate, i));
       }
       return dates;
-    } else if (view === 'week') {
+    } else if (viewMode === 'week') {
       // Show 12 weeks
       const dates = [];
       for (let i = -6; i < 6; i++) {
@@ -95,20 +117,20 @@ const GanttChart = () => {
       }
       return dates;
     }
-  }, [currentDate, view]);
+  }, [currentDate, viewMode]);
   
   // Generate time scale labels
   const timeScaleLabels = useMemo(() => {
     return timelineDates.map(date => {
-      if (view === 'day') return format(date, 'd');
-      if (view === 'week') return `Week ${format(date, 'w')}`;
+      if (viewMode === 'day') return format(date, 'd');
+      if (viewMode === 'week') return `Week ${format(date, 'w')}`;
       return format(date, 'MMM');
     });
-  }, [timelineDates, view]);
+  }, [timelineDates, viewMode]);
   
   // Generate month labels for day/week views
   const monthLabels = useMemo(() => {
-    if (view === 'month') return null;
+    if (viewMode === 'month') return null;
     
     const months = {};
     timelineDates.forEach((date, index) => {
@@ -125,7 +147,31 @@ const GanttChart = () => {
     });
     
     return Object.values(months);
-  }, [timelineDates, view]);
+  }, [timelineDates, viewMode]);
+  
+  // Calculate allocation percentage
+  const calculateAllocation = (project) => {
+    if (!project || !project['Project ID']) return 0;
+    
+    const projectAssignments = assignments.filter(a => a && a['Project ID'] === project['Project ID']);
+    const totalAllocated = projectAssignments.reduce((sum, a) => {
+      return sum + parseInt(a['Allocated Images'] || 0, 10);
+    }, 0);
+    
+    const qty = parseInt(project['Qty'] || 0, 10);
+    if (!qty) return 0;
+    
+    return Math.min(100, Math.round((totalAllocated / qty) * 100));
+  };
+  
+  // Get project color based on allocation percentage
+  const getProjectColor = (allocation) => {
+    if (allocation >= 100) return '#4caf50'; // Green (fully allocated)
+    if (allocation >= 75) return '#8bc34a';  // Light green (mostly allocated)
+    if (allocation >= 50) return '#ffc107';  // Amber (half allocated)
+    if (allocation >= 25) return '#ff9800';  // Orange (partially allocated)
+    return '#f44336';                        // Red (low allocation)
+  };
   
   // Calculate project timeline position
   const getProjectTimeline = (project) => {
@@ -134,11 +180,32 @@ const GanttChart = () => {
     }
     
     try {
-      const startDate = new Date(project['Previsional launch date']);
-      const endDate = new Date(project['Previsional final date']);
+      let startDate = new Date(project['Previsional launch date']);
+      let endDate = new Date(project['Previsional final date']);
+      
+      // Force parse dates if they're in DD/MM/YYYY format
+      if (isNaN(startDate.getTime())) {
+        const parts = project['Previsional launch date'].split('/');
+        if (parts.length === 3) {
+          startDate = new Date(parseInt(parts[2]), parseInt(parts[1])-1, parseInt(parts[0]));
+        }
+      }
+      
+      if (isNaN(endDate.getTime())) {
+        const parts = project['Previsional final date'].split('/');
+        if (parts.length === 3) {
+          endDate = new Date(parseInt(parts[2]), parseInt(parts[1])-1, parseInt(parts[0]));
+        }
+      }
       
       if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+        console.error('Invalid dates for project:', project['Project Name']);
         return { left: 0, width: 0, visible: false };
+      }
+      
+      // Ensure end date is after start date
+      if (endDate < startDate) {
+        [startDate, endDate] = [endDate, startDate];
       }
       
       // Check if project is visible in current timeframe
@@ -147,7 +214,7 @@ const GanttChart = () => {
       
       let isVisible = true;
       
-      if (view === 'month') {
+      if (viewMode === 'month') {
         const viewStartMonth = startOfMonth(viewStart);
         const viewEndMonth = endOfMonth(viewEnd);
         
@@ -187,51 +254,6 @@ const GanttChart = () => {
     }
   };
   
-  // Calculate allocation percentage
-  const calculateAllocation = (project) => {
-    if (!project || !project['Project ID']) return 0;
-    
-    const projectAssignments = assignments.filter(a => a && a['Project ID'] === project['Project ID']);
-    const totalAllocated = projectAssignments.reduce((sum, a) => {
-      return sum + parseInt(a['Allocated Images'] || 0, 10);
-    }, 0);
-    
-    const qty = parseInt(project['Qty'] || 0, 10);
-    if (!qty) return 0;
-    
-    return Math.min(100, Math.round((totalAllocated / qty) * 100));
-  };
-  
-  // Get project color based on status
-  const getProjectColor = (status) => {
-    if (!status) return '#757575'; // Gray
-    
-    const lowerStatus = status.toLowerCase();
-    
-    if (lowerStatus.includes('completed')) return '#4caf50'; // Green
-    if (lowerStatus.includes('in progress')) return '#3f51b5'; // Blue
-    if (lowerStatus.includes('not started')) return '#ff9800'; // Orange
-    
-    return '#3f51b5'; // Default blue
-  };
-  
-  // Filter projects
-  const filteredProjects = useMemo(() => {
-    if (clientFilter === 'All') return projects;
-    return projects.filter(p => p.Client === clientFilter);
-  }, [projects, clientFilter]);
-  
-  // Handle navigation
-  const handleNavigate = (direction) => {
-    if (view === 'day') {
-      setCurrentDate(prev => direction === 'prev' ? addDays(prev, -30) : addDays(prev, 30));
-    } else if (view === 'week') {
-      setCurrentDate(prev => direction === 'prev' ? addWeeks(prev, -12) : addWeeks(prev, 12));
-    } else {
-      setCurrentDate(prev => direction === 'prev' ? addMonths(prev, -12) : addMonths(prev, 12));
-    }
-  };
-  
   // Get project bar height based on quantity
   const getBarHeight = (qty) => {
     const parsedQty = parseInt(qty || 0, 10);
@@ -246,414 +268,665 @@ const GanttChart = () => {
     return Math.min(Math.max(height, minHeight), maxHeight);
   };
   
-  // Handle click on project to navigate to detail page
+  // Handle navigation
+  const handleNavigation = (direction) => {
+    const modifier = direction === 'next' ? 1 : -1;
+    
+    if (viewMode === 'day') {
+      setCurrentDate(prevDate => addDays(prevDate, modifier * 7));
+    } else if (viewMode === 'week') {
+      setCurrentDate(prevDate => addWeeks(prevDate, modifier * 2));
+    } else {
+      setCurrentDate(prevDate => addMonths(prevDate, modifier * 3));
+    }
+  };
+  
+  // Update the status color function to be more distinct
+  const getStatusColor = (project) => {
+    const status = project['Status'] ? project['Status'].toLowerCase() : '';
+    
+    if (status.includes('completed')) {
+      return '#4caf50'; // Green
+    } else if (status.includes('progress')) {
+      return '#3f51b5'; // Blue
+    } else if (status.includes('not started')) {
+      return '#ff9800'; // Orange
+    } else {
+      return '#757575'; // Gray for unknown status
+    }
+  };
+  
+  // Calculate project bar dimensions and position
+  const getProjectBarStyle = (project) => {
+    try {
+      const startDate = new Date(project['Previsional launch date']);
+      const endDate = new Date(project['Previsional final date']);
+      
+      // Force parse dates if they're in DD/MM/YYYY format
+      let parsedStartDate = startDate;
+      let parsedEndDate = endDate;
+      
+      if (isNaN(startDate.getTime())) {
+        const parts = project['Previsional launch date'].split('/');
+        if (parts.length === 3) {
+          parsedStartDate = new Date(parseInt(parts[2]), parseInt(parts[1])-1, parseInt(parts[0]));
+        }
+      }
+      
+      if (isNaN(endDate.getTime())) {
+        const parts = project['Previsional final date'].split('/');
+        if (parts.length === 3) {
+          parsedEndDate = new Date(parseInt(parts[2]), parseInt(parts[1])-1, parseInt(parts[0]));
+        }
+      }
+      
+      if (isNaN(parsedStartDate.getTime()) || isNaN(parsedEndDate.getTime())) {
+        console.error('Invalid dates for project:', project['Project Name']);
+        return { display: 'none' };
+      }
+      
+      const periods = timelineDates;
+      const timelineStart = viewMode === 'day' 
+        ? periods[0] 
+        : viewMode === 'week'
+          ? startOfWeek(periods[0])
+          : startOfMonth(periods[0]);
+          
+      const timelineEnd = viewMode === 'day'
+        ? periods[periods.length - 1]
+        : viewMode === 'week'
+          ? endOfWeek(periods[periods.length - 1])
+          : endOfMonth(periods[periods.length - 1]);
+      
+      // Skip if project is completely outside the timeline
+      if (parsedEndDate < timelineStart || parsedStartDate > timelineEnd) {
+        return { display: 'none' };
+      }
+      
+      // Calculate project position
+      const timelineDuration = differenceInDays(timelineEnd, timelineStart) || 1;
+      const projectStart = Math.max(0, differenceInDays(parsedStartDate, timelineStart));
+      const projectDuration = Math.max(1, differenceInDays(
+        parsedEndDate < timelineEnd ? parsedEndDate : timelineEnd,
+        parsedStartDate > timelineStart ? parsedStartDate : timelineStart
+      ));
+      
+      // Scale factors
+      const leftPercent = (projectStart / timelineDuration) * 100;
+      const widthPercent = (projectDuration / timelineDuration) * 100;
+      
+      // Adjust bar height based on project size (Qty)
+      const qty = parseInt(project['Qty'] || 0, 10);
+      let barHeight;
+      
+      if (qty <= 10) {
+        barHeight = 20; // Minimum height
+      } else if (qty <= 50) {
+        barHeight = 30;
+      } else if (qty <= 200) {
+        barHeight = 40;
+      } else {
+        barHeight = 50; // Maximum height for large projects
+      }
+      
+      const statusColor = getStatusColor(project);
+      
+      return {
+        position: 'absolute',
+        left: `${leftPercent}%`,
+        width: `${widthPercent}%`,
+        height: `${barHeight}px`,
+        top: '50%',
+        transform: 'translateY(-50%)',
+        backgroundColor: 'white',
+        border: `2px solid ${statusColor}`,
+        borderRadius: '16px',
+        overflow: 'hidden',
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+        zIndex: 2,
+      };
+    } catch (error) {
+      console.error('Error calculating project bar:', error, project);
+      return { display: 'none' };
+    }
+  };
+  
+  // Get allocation fill style
+  const getAllocationFillStyle = (project) => {
+    const allocation = parseFloat(project['Allocation %'] || 0);
+    const statusColor = getStatusColor(project);
+    
+    return {
+      position: 'absolute',
+      left: 0,
+      top: 0,
+      bottom: 0,
+      width: `${allocation}%`,
+      backgroundColor: statusColor,
+      borderRadius: '14px 0 0 14px'
+    };
+  };
+  
+  // Handle project click
   const handleProjectClick = (projectId) => {
     if (projectId) {
       navigate(`/projects/${encodeURIComponent(projectId)}`);
     }
   };
   
+  // Handle client menu
+  const handleClientMenuOpen = (event) => {
+    setClientMenuAnchor(event.currentTarget);
+  };
+  
+  const handleClientMenuClose = () => {
+    setClientMenuAnchor(null);
+  };
+  
+  const handleClientSelect = (client) => {
+    setSelectedClient(client);
+    handleClientMenuClose();
+  };
+  
+  // Project tooltip component
+  const ProjectTooltip = ({ project }) => {
+    if (!project) return null;
+    
+    // For debugging - ensure we're getting project data
+    console.log('Tooltip project data:', project);
+    
+    let startDate, endDate;
+    
+    try {
+      // Parse start date
+      if (project['Previsional launch date']) {
+        startDate = new Date(project['Previsional launch date']);
+        if (isNaN(startDate.getTime())) {
+          const parts = project['Previsional launch date'].split('/');
+          if (parts.length === 3) {
+            startDate = new Date(parseInt(parts[2]), parseInt(parts[1])-1, parseInt(parts[0]));
+          }
+        }
+      }
+      
+      // Parse end date
+      if (project['Previsional final date']) {
+        endDate = new Date(project['Previsional final date']);
+        if (isNaN(endDate.getTime())) {
+          const parts = project['Previsional final date'].split('/');
+          if (parts.length === 3) {
+            endDate = new Date(parseInt(parts[2]), parseInt(parts[1])-1, parseInt(parts[0]));
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error parsing dates for tooltip:', error, project);
+    }
+    
+    const qty = parseInt(project['Qty'] || 0, 10);
+    const allocation = parseFloat(project['Allocation %'] || 0);
+    const done = parseInt(project['Done'] || 0, 10);
+    
+    return (
+      <Box sx={{ 
+        p: 2, 
+        width: 300,
+        borderRadius: 2,
+        bgcolor: 'white',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
+      }}>
+        <Typography variant="h6" sx={{ mb: 1, color: 'primary.main', fontWeight: 'bold' }}>
+          {project['Project Name'] || 'Unnamed Project'}
+        </Typography>
+        
+        <Box sx={{ mb: 2 }}>
+          <Chip 
+            label={project['Client'] || 'No Client'} 
+            size="small" 
+            sx={{ 
+              mb: 1,
+              bgcolor: '#e3f2fd', 
+              color: '#0d47a1', 
+              fontWeight: 'medium',
+              mr: 1
+            }} 
+          />
+          <Chip 
+            label={project['Status'] || 'Not Set'} 
+            size="small" 
+            sx={{ 
+              bgcolor: alpha(getStatusColor(project), 0.1),
+              color: getStatusColor(project),
+              fontWeight: 'medium' 
+            }} 
+          />
+        </Box>
+        
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+            <Typography variant="body2" color="text.secondary">Start Date:</Typography>
+            <Typography variant="body2" fontWeight="medium">
+              {startDate && !isNaN(startDate.getTime()) ? format(startDate, 'MMM d, yyyy') : 'Not set'}
+            </Typography>
+          </Box>
+          
+          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+            <Typography variant="body2" color="text.secondary">End Date:</Typography>
+            <Typography variant="body2" fontWeight="medium">
+              {endDate && !isNaN(endDate.getTime()) ? format(endDate, 'MMM d, yyyy') : 'Not set'}
+            </Typography>
+          </Box>
+          
+          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+            <Typography variant="body2" color="text.secondary">Duration:</Typography>
+            <Typography variant="body2" fontWeight="medium">
+              {startDate && !isNaN(startDate.getTime()) && endDate && !isNaN(endDate.getTime()) 
+                ? `${differenceInDays(endDate, startDate) + 1} days` 
+                : 'Not available'}
+            </Typography>
+          </Box>
+          
+          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+            <Typography variant="body2" color="text.secondary">Total Images:</Typography>
+            <Typography variant="body2" fontWeight="medium">{qty || 0}</Typography>
+          </Box>
+          
+          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+            <Typography variant="body2" color="text.secondary">Completed:</Typography>
+            <Typography variant="body2" fontWeight="medium">{done || 0} images</Typography>
+          </Box>
+          
+          <Box sx={{ mt: 1 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+              <Typography variant="body2" color="text.secondary">Allocation:</Typography>
+              <Typography variant="body2" fontWeight="bold">{allocation || 0}%</Typography>
+            </Box>
+            <Box sx={{ 
+              width: '100%', 
+              height: 8, 
+              bgcolor: '#f0f0f0',
+              borderRadius: 4,
+              overflow: 'hidden'
+            }}>
+              <Box sx={{ 
+                height: '100%', 
+                width: `${allocation || 0}%`,
+                bgcolor: getStatusColor(project)
+              }} />
+            </Box>
+          </Box>
+        </Box>
+      </Box>
+    );
+  };
+  
   // Loading state
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
         <CircularProgress />
       </Box>
     );
   }
 
+  const periods = timelineDates;
+  const periodLabel = viewMode === 'month' 
+    ? `${format(periods[0], 'MMMM yyyy')} - ${format(periods[periods.length - 1], 'MMMM yyyy')}`
+    : viewMode === 'week'
+      ? `Week ${format(periods[0], 'w')} - Week ${format(periods[periods.length - 1], 'w')}`
+      : `${format(periods[0], 'MMM d')} - ${format(periods[periods.length - 1], 'MMM d, yyyy')}`;
+
   return (
-    <Box sx={{ p: 3 }}>
+    <Box sx={{ 
+      p: 3, 
+      bgcolor: '#f5f7fa', 
+      borderRadius: 2, 
+      minHeight: 'calc(100vh - 120px)',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 2
+    }}>
       {/* Header */}
       <Box sx={{ 
         display: 'flex', 
         alignItems: 'center', 
-        mb: 3,
-        p: 2,
-        borderRadius: 2,
-        bgcolor: 'rgba(227, 232, 251, 0.5)'
+        gap: 2, 
+        p: 2, 
+        borderRadius: 4,
+        bgcolor: '#e3e8f0'
       }}>
-        <Box sx={{ 
-          bgcolor: 'primary.main', 
-          color: 'white',
-          width: 40, 
-          height: 40, 
-          borderRadius: '50%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          mr: 2
-        }}>
-          <TodayIcon />
-        </Box>
-        <Typography variant="h4" sx={{ color: 'primary.main', fontWeight: 'medium' }}>
+        <TodayIcon color="primary" fontSize="large" />
+        <Typography variant="h4" color="primary" fontWeight="medium">
           Project Timeline
         </Typography>
       </Box>
       
       {/* Controls */}
-      <Paper sx={{ p: 2, mb: 3, borderRadius: 2 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
-          {/* Date and view controls */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            {/* Date navigator */}
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <IconButton onClick={() => handleNavigate('prev')} size="small" color="primary">
-                <ChevronLeftIcon />
-              </IconButton>
-              
-              <Typography variant="h6" sx={{ width: 150, textAlign: 'center' }}>
-                {view === 'month' ? format(currentDate, 'MMMM yyyy') : 
-                 view === 'week' ? `Week ${format(currentDate, 'w')} ${format(currentDate, 'yyyy')}` :
-                 format(currentDate, 'dd MMM yyyy')}
-              </Typography>
-              
-              <IconButton onClick={() => handleNavigate('next')} size="small" color="primary">
-                <ChevronRightIcon />
-              </IconButton>
-            </Box>
+      <Paper 
+        elevation={0}
+        sx={{ 
+          p: 1, 
+          display: 'flex', 
+          flexWrap: 'wrap',
+          justifyContent: 'space-between', 
+          alignItems: 'center',
+          gap: 2,
+          borderRadius: 2
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', bgcolor: '#f5f7fa', borderRadius: 4, p: 0.5 }}>
+            <IconButton size="small" onClick={() => handleNavigation('prev')}>
+              <ArrowBackIosNewIcon fontSize="small" />
+            </IconButton>
             
-            {/* View selector */}
-            <ButtonGroup variant="outlined" size="small">
-              <Button 
-                variant={view === 'day' ? 'contained' : 'outlined'} 
-                onClick={() => setView('day')}
-                color="primary"
-              >
-                Day
-              </Button>
-              <Button 
-                variant={view === 'week' ? 'contained' : 'outlined'} 
-                onClick={() => setView('week')}
-                color="primary"
-              >
-                Week
-              </Button>
-              <Button 
-                variant={view === 'month' ? 'contained' : 'outlined'} 
-                onClick={() => setView('month')}
-                color="primary"
-              >
-                Month
-              </Button>
-            </ButtonGroup>
+            <Typography variant="h6" sx={{ px: 2, minWidth: 240, textAlign: 'center' }}>
+              {periodLabel}
+            </Typography>
             
-            {/* Go to today */}
-            <IconButton color="primary" onClick={() => setCurrentDate(new Date())}>
-              <TodayIcon />
+            <IconButton size="small" onClick={() => handleNavigation('next')}>
+              <ArrowForwardIosIcon fontSize="small" />
             </IconButton>
           </Box>
           
-          {/* Zoom and filters */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            {/* Zoom control */}
-            <Stack direction="row" spacing={1} alignItems="center" sx={{ width: 200 }}>
-              <IconButton size="small" onClick={() => setZoomLevel(prev => Math.max(0.5, prev - 0.1))} color="primary">
-                <ZoomOutIcon />
-              </IconButton>
-              <Slider
-                value={zoomLevel}
-                min={0.5}
-                max={2}
-                step={0.1}
-                onChange={(_, value) => setZoomLevel(value)}
-                color="primary"
-              />
-              <IconButton size="small" onClick={() => setZoomLevel(prev => Math.min(2, prev + 0.1))} color="primary">
-                <ZoomInIcon />
-              </IconButton>
-            </Stack>
-            
-            {/* Client filter */}
+          <ButtonGroup variant="outlined" sx={{ ml: 2 }}>
+            <ViewButton 
+              active={viewMode === 'day' ? 1 : 0}
+              onClick={() => setViewMode('day')}
+            >
+              Day
+            </ViewButton>
+            <ViewButton 
+              active={viewMode === 'week' ? 1 : 0}
+              onClick={() => setViewMode('week')}
+            >
+              Week
+            </ViewButton>
+            <ViewButton 
+              active={viewMode === 'month' ? 1 : 0}
+              onClick={() => setViewMode('month')}
+            >
+              Month
+            </ViewButton>
+          </ButtonGroup>
+        </Box>
+        
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Box sx={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: 1, 
+            width: 180,
+            bgcolor: '#f5f7fa',
+            borderRadius: 8,
+            px: 1
+          }}>
+            <IconButton size="small" onClick={() => setZoomLevel(Math.max(zoomLevel - 25, 0))}>
+              <ZoomInIcon fontSize="small" />
+            </IconButton>
+            <Slider
+              value={zoomLevel}
+              onChange={(e, newValue) => setZoomLevel(newValue)}
+              sx={{ mx: 1 }}
+              size="small"
+            />
+            <IconButton size="small" onClick={() => setZoomLevel(Math.min(zoomLevel + 25, 100))}>
+              <ZoomOutIcon fontSize="small" />
+            </IconButton>
+          </Box>
+          
+          <Box>
             <Button
               variant="outlined"
-              color="primary"
-              startIcon={<FilterAltIcon />}
-              endIcon={<ExpandMoreIcon />}
-              onClick={(e) => setClientMenu(e.currentTarget)}
+              startIcon={<FilterListIcon />}
+              endIcon={<ArrowForwardIosIcon fontSize="small" />}
+              onClick={handleClientMenuOpen}
+              sx={{ borderRadius: 6 }}
             >
-              {clientFilter === 'All' ? 'Filter by Client' : `Client: ${clientFilter}`}
+              Filter by Client
             </Button>
             <Menu
-              anchorEl={clientMenu}
-              open={Boolean(clientMenu)}
-              onClose={() => setClientMenu(null)}
+              anchorEl={clientMenuAnchor}
+              open={Boolean(clientMenuAnchor)}
+              onClose={handleClientMenuClose}
             >
+              <MenuItem onClick={() => handleClientSelect('all')}>
+                <ListItemText primary="All Clients" />
+              </MenuItem>
               {clients.map(client => (
-                <MenuItem 
-                  key={client} 
-                  onClick={() => {
-                    setClientFilter(client);
-                    setClientMenu(null);
-                  }}
-                  selected={clientFilter === client}
-                >
-                  {client}
+                <MenuItem key={client} onClick={() => handleClientSelect(client)}>
+                  <ListItemText primary={client} />
                 </MenuItem>
               ))}
             </Menu>
           </Box>
+          
+          <IconButton sx={{ bgcolor: '#f5f7fa', p: 1 }}>
+            <PeopleIcon />
+          </IconButton>
         </Box>
       </Paper>
       
-      {/* Legend */}
-      <Paper sx={{ p: 2, mb: 3, borderRadius: 2 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'center', gap: 4, flexWrap: 'wrap' }}>
-          <Typography variant="subtitle1" fontWeight="bold">Legend:</Typography>
-          
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Box sx={{ width: 40, height: 8, bgcolor: 'primary.main', borderRadius: 1 }} />
-            <Typography>Bar length = Project duration</Typography>
-          </Box>
-          
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-              <Box sx={{ height: 4, width: 40, bgcolor: 'primary.main', borderRadius: 1 }} />
-              <Box sx={{ height: 10, width: 40, bgcolor: 'primary.main', borderRadius: 1 }} />
-              <Box sx={{ height: 16, width: 40, bgcolor: 'primary.main', borderRadius: 1 }} />
-            </Box>
-            <Typography>Bar thickness = Project size (qty)</Typography>
-          </Box>
-          
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Box sx={{ 
-              position: 'relative', 
-              width: 40, 
-              height: 12, 
-              bgcolor: 'rgba(63, 81, 181, 0.2)',
-              overflow: 'hidden',
-              borderRadius: 1
-            }}>
-              <Box 
-                sx={{ 
-                  position: 'absolute',
-                  left: 0,
-                  top: 0,
-                  height: '100%',
-                  width: '60%',
-                  bgcolor: 'primary.main',
-                  borderRadius: '4px 0 0 4px'
-                }} 
-              />
-            </Box>
-            <Typography>Filled portion = % allocated</Typography>
-          </Box>
-        </Box>
-      </Paper>
-
-      {/* Gantt Chart Header */}
+      {/* Gantt Chart */}
       <Paper 
+        elevation={0}
         sx={{ 
-          mb: 0, 
-          borderBottomLeftRadius: 0, 
-          borderBottomRightRadius: 0,
-          overflow: 'hidden'
+          flexGrow: 1, 
+          overflow: 'hidden', 
+          borderRadius: 2,
+          display: 'flex',
+          flexDirection: 'column'
         }}
       >
-        <Box sx={{ display: 'grid', gridTemplateColumns: '300px 1fr' }}>
-          <Box 
-            sx={{ 
-              p: 1.5, 
-              fontWeight: 'bold', 
-              borderRight: '1px solid rgba(0, 0, 0, 0.12)',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center'
-            }}
-          >
-            <Typography variant="subtitle1" fontWeight="bold">Project List</Typography>
-            <Typography variant="caption" color="text.secondary">
-              {filteredProjects.length} project{filteredProjects.length !== 1 ? 's' : ''}
-            </Typography>
+        {/* Chart header */}
+        <Box sx={{ 
+          display: 'grid', 
+          gridTemplateColumns: '250px 1fr',
+          borderBottom: '1px solid #e0e0e0'
+        }}>
+          <Box sx={{ p: 2, fontWeight: 'bold', borderRight: '1px solid #e0e0e0' }}>
+            <Typography variant="subtitle1">Project</Typography>
           </Box>
           
-          <Box>
-            {/* Month headers */}
-            {monthLabels && (
-              <Box sx={{ display: 'flex', borderBottom: '1px solid rgba(0, 0, 0, 0.12)' }}>
-                {monthLabels.map((month, index) => {
-                  const width = ((month.endIndex - month.startIndex + 1) / timelineDates.length) * 100;
-                  return (
-                    <Box 
-                      key={index}
-                      sx={{ 
-                        width: `${width}%`,
-                        textAlign: 'center',
-                        p: 0.5,
-                        fontWeight: 'medium',
-                        bgcolor: 'rgba(0, 0, 0, 0.02)',
-                        borderRight: index < monthLabels.length - 1 ? '1px solid rgba(0, 0, 0, 0.12)' : 'none'
-                      }}
-                    >
-                      {month.label}
-                    </Box>
-                  );
-                })}
+          <Box sx={{ display: 'flex', overflow: 'hidden' }}>
+            {viewMode === 'month' && (
+              <Box sx={{ display: 'flex', width: '100%' }}>
+                {periods.map((month, index) => (
+                  <Box 
+                    key={index} 
+                    sx={{ 
+                      flex: 1,
+                      p: 2,
+                      textAlign: 'center',
+                      borderRight: index < periods.length - 1 ? '1px solid #e0e0e0' : 'none',
+                      fontWeight: 'medium'
+                    }}
+                  >
+                    {format(month, 'MMM yyyy')}
+                  </Box>
+                ))}
               </Box>
             )}
             
-            {/* Time scale labels */}
-            <Box sx={{ display: 'flex' }}>
-              {timeScaleLabels.map((label, index) => (
-                <Box 
-                  key={index}
-                  sx={{ 
-                    flex: 1,
-                    p: 1,
-                    textAlign: 'center',
-                    borderRight: index < timeScaleLabels.length - 1 ? '1px solid rgba(0, 0, 0, 0.12)' : 'none',
-                    bgcolor: view === 'day' && [0, 6].includes(timelineDates[index].getDay()) ? 'rgba(0, 0, 0, 0.04)' : 'transparent'
-                  }}
-                >
-                  <Typography variant="caption">{label}</Typography>
-                </Box>
-              ))}
-            </Box>
+            {viewMode === 'week' && (
+              <Box sx={{ display: 'flex', width: '100%' }}>
+                {periods.map((week, index) => (
+                  <Box 
+                    key={index} 
+                    sx={{ 
+                      flex: 1,
+                      borderRight: index < periods.length - 1 ? '1px solid #e0e0e0' : 'none',
+                    }}
+                  >
+                    <Box sx={{ p: 1, textAlign: 'center', fontWeight: 'medium' }}>
+                      Week {format(week, 'w')}
+                    </Box>
+                    <Box sx={{ display: 'flex', borderTop: '1px solid #e0e0e0' }}>
+                      {eachDayOfInterval({ start: week, end: addDays(week, 7) }).map((day, dayIndex) => (
+                        <Box 
+                          key={dayIndex} 
+                          sx={{ 
+                            flex: 1,
+                            p: 0.5,
+                            textAlign: 'center',
+                            fontSize: '0.75rem',
+                            borderRight: dayIndex < 6 ? '1px solid #f0f0f0' : 'none',
+                            bgcolor: format(day, 'E') === 'Sat' || format(day, 'E') === 'Sun' 
+                              ? 'rgba(0,0,0,0.03)' 
+                              : 'transparent'
+                          }}
+                        >
+                          {format(day, 'd')}
+                        </Box>
+                      ))}
+                    </Box>
+                  </Box>
+                ))}
+              </Box>
+            )}
+            
+            {viewMode === 'day' && (
+              <Box sx={{ display: 'flex', width: '100%' }}>
+                {periods.map((day, index) => (
+                  <Box 
+                    key={index} 
+                    sx={{ 
+                      p: 1,
+                      flex: 1,
+                      textAlign: 'center',
+                      borderRight: index < periods.length - 1 ? '1px solid #e0e0e0' : 'none',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      bgcolor: format(day, 'E') === 'Sat' || format(day, 'E') === 'Sun' 
+                        ? 'rgba(0,0,0,0.03)' 
+                        : 'transparent',
+                      fontWeight: isSameMonth(day, currentDate) ? 'normal' : 'light'
+                    }}
+                  >
+                    <Typography variant="caption">{format(day, 'EEE')}</Typography>
+                    <Typography>{format(day, 'd')}</Typography>
+                  </Box>
+                ))}
+              </Box>
+            )}
           </Box>
         </Box>
-      </Paper>
-      
-      {/* Project Rows */}
-      <Paper 
-        sx={{ 
-          maxHeight: 'calc(100vh - 350px)',
-          minHeight: '600px',
-          overflow: 'auto',
-          borderTopLeftRadius: 0,
-          borderTopRightRadius: 0
-        }}
-      >
+        
+        {/* Projects list */}
         <Box sx={{ 
-          minWidth: 800 * zoomLevel,
-          width: `${800 * zoomLevel}px`
+          flexGrow: 1, 
+          overflow: 'auto',
+          minHeight: 400,
+          position: 'relative'
         }}>
-          {filteredProjects.map((project, index) => {
-            const timeline = getProjectTimeline(project);
-            const allocation = calculateAllocation(project);
-            const color = getProjectColor(project['Status']);
-            const qty = parseInt(project['Qty'] || 0, 10);
-            
-            return (
-              <Box 
-                key={project['Project ID'] || index}
-                sx={{ 
-                  display: 'grid',
-                  gridTemplateColumns: '300px 1fr',
-                  borderBottom: '1px solid rgba(0, 0, 0, 0.12)',
-                  height: 80,
-                  '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.04)', cursor: 'pointer' },
-                }}
-                onClick={() => handleProjectClick(project['Project ID'])}
-              >
-                {/* Project info */}
-                <Box sx={{ 
-                  p: 1.5, 
-                  borderRight: '1px solid rgba(0, 0, 0, 0.12)',
-                  bgcolor: 'background.paper'
-                }}>
-                  <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                    <Typography variant="subtitle2" fontWeight="bold">{project['Project Name']}</Typography>
-                    
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+          {projects.length > 0 ? (
+            <Box sx={{ display: 'grid', gridTemplateColumns: '250px 1fr' }}>
+              {/* Project names column */}
+              <Box sx={{ borderRight: '1px solid #e0e0e0' }}>
+                {projects.map((project, index) => (
+                  <Box
+                    key={`name-${project['Project ID'] || index}`}
+                    sx={{
+                      p: 2,
+                      height: '60px',
+                      borderBottom: '1px solid #e0e0e0',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      '&:hover': {
+                        bgcolor: 'rgba(0,0,0,0.02)'
+                      }
+                    }}
+                    onClick={() => handleProjectClick(project['Project ID'])}
+                  >
+                    <Typography variant="body1" fontWeight="medium" noWrap title={project['Project Name'] || 'Unnamed Project'}>
+                      {project['Project Name'] || 'Unnamed Project'}
+                    </Typography>
+                    <Box sx={{ display: 'flex', gap: 1, mt: 0.5 }}>
                       <Chip 
                         label={project['Client']} 
                         size="small" 
                         sx={{ 
-                          bgcolor: 'rgba(63, 81, 181, 0.1)', 
-                          color: 'primary.main',
-                          height: 20,
-                          fontSize: '0.7rem'
-                        }}
+                          height: 20, 
+                          fontSize: '0.7rem',
+                          bgcolor: '#e3f2fd', 
+                          color: '#0d47a1'
+                        }} 
                       />
-                      <Typography variant="caption" color="text.secondary">
-                        {qty} images
-                      </Typography>
                     </Box>
                   </Box>
-                </Box>
-                
-                {/* Timeline bar */}
-                <Box sx={{ position: 'relative', height: '100%' }}>
-                  {timeline.visible ? (
-                    <Tooltip
-                      title={
-                        <Box>
-                          <Typography variant="subtitle2">{project['Project Name']}</Typography>
-                          <Typography variant="body2">Client: {project['Client']}</Typography>
-                          <Typography variant="body2">Start: {format(new Date(project['Previsional launch date']), 'MMM d, yyyy')}</Typography>
-                          <Typography variant="body2">End: {format(new Date(project['Previsional final date']), 'MMM d, yyyy')}</Typography>
-                          <Typography variant="body2">Images: {qty}</Typography>
-                          <Typography variant="body2">Status: {project['Status'] || 'Not set'}</Typography>
-                          <Typography variant="body2" fontWeight="bold">
-                            Allocation: {allocation}% ({Math.round(allocation * qty / 100)}/{qty} images)
-                          </Typography>
-                        </Box>
+                ))}
+              </Box>
+              
+              {/* Timeline bars column */}
+              <Box sx={{ position: 'relative', overflow: 'hidden' }}>
+                {projects.map((project, index) => (
+                  <Box
+                    key={`bar-${project['Project ID'] || index}`}
+                    sx={{
+                      position: 'relative',
+                      height: '60px',
+                      borderBottom: '1px solid #e0e0e0',
+                      cursor: 'pointer',
+                      '&:hover': {
+                        bgcolor: 'rgba(0,0,0,0.02)'
                       }
-                      arrow
+                    }}
+                    onClick={() => handleProjectClick(project['Project ID'])}
+                  >
+                    <Tooltip
+                      title={<ProjectTooltip project={project} />}
                       placement="top"
-                    >
-                      <Box
-                        sx={{
-                          position: 'absolute',
-                          height: `${getBarHeight(qty)}%`,
-                          left: timeline.left,
-                          width: timeline.width,
-                          top: '50%',
-                          transform: 'translateY(-50%)',
-                          bgcolor: 'rgba(63, 81, 181, 0.2)',
-                          borderRadius: 2,
-                          display: 'flex',
-                          alignItems: 'center',
-                          pl: 1,
-                          pr: 1,
-                          overflow: 'hidden',
-                          '&::after': {
-                            content: '""',
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            height: '100%',
-                            width: `${allocation}%`,
-                            bgcolor: color,
-                            borderRadius: '8px 0 0 8px',
-                            zIndex: 0
+                      arrow
+                      followCursor
+                      enterDelay={100}
+                      leaveDelay={300}
+                      componentsProps={{
+                        tooltip: {
+                          sx: {
+                            bgcolor: 'transparent',
+                            maxWidth: 'none',
+                            '& .MuiTooltip-arrow': {
+                              color: 'white'
+                            }
                           }
-                        }}
-                      >
-                        {allocation > 0 && (
-                          <Typography 
-                            variant="caption" 
-                            sx={{ 
-                              zIndex: 1, 
-                              fontWeight: 'bold',
-                              color: allocation > 50 ? '#fff' : 'inherit',
-                              whiteSpace: 'nowrap',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis'
-                            }}
-                          >
-                            {allocation}% ({Math.round(allocation * qty / 100)}/{qty})
-                          </Typography>
-                        )}
-                      </Box>
-                    </Tooltip>
-                  ) : (
-                    <Box 
-                      sx={{ 
-                        position: 'absolute',
-                        top: '50%',
-                        left: '50%',
-                        transform: 'translate(-50%, -50%)',
-                        color: 'text.secondary'
+                        }
                       }}
                     >
-                      <Typography variant="caption">Outside current view</Typography>
-                    </Box>
-                  )}
-                </Box>
+                      <Box sx={getProjectBarStyle(project)}>
+                        <Box sx={getAllocationFillStyle(project)} />
+                        <Typography 
+                          variant="body2" 
+                          sx={{ 
+                            position: 'relative', 
+                            zIndex: 2, 
+                            fontWeight: 'medium',
+                            color: 'rgba(0,0,0,0.87)',
+                            px: 1,
+                            textShadow: '0 0 4px rgba(255,255,255,0.8)'
+                          }}
+                        >
+                          {project['Allocation %'] || 0}% allocated ({project['Done'] || 0}/{project['Qty'] || 0})
+                        </Typography>
+                      </Box>
+                    </Tooltip>
+                  </Box>
+                ))}
               </Box>
-            );
-          })}
+            </Box>
+          ) : (
+            <Box sx={{ p: 4, textAlign: 'center' }}>
+              <Typography variant="body1" color="text.secondary">
+                No projects match your filter criteria
+              </Typography>
+            </Box>
+          )}
         </Box>
       </Paper>
     </Box>
